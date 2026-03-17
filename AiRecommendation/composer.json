@@ -1,0 +1,22 @@
+{
+    "name": "devexa/module-ai-recommendation",
+    "description": "AI-powered product recommendations: Recommended for you, Frequently bought together, Customers also bought",
+    "type": "magento2-module",
+    "license": "proprietary",
+    "version": "1.0.0",
+    "require": {
+        "php": ">=8.1",
+        "magento/framework": ">=103.0",
+        "magento/module-catalog": ">=104.0",
+        "magento/module-checkout": ">=100.4",
+        "magento/module-customer": ">=103.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Devexa\\AiRecommendation\\": ""
+        },
+        "files": [
+            "registration.php"
+        ]
+    }
+}

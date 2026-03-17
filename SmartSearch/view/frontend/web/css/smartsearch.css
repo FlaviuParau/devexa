@@ -1,0 +1,104 @@
+/* Devexa SmartSearch — Luma theme styles */
+.devexa-search-wrapper { position: relative; width: 100%; }
+.devexa-search-input-wrap { position: relative; }
+.devexa-search-input-wrap input {
+    width: 100%; padding: 10px 40px 10px 36px;
+    border: 1px solid #ccc; border-radius: 6px;
+    font-size: 14px; outline: none; transition: border-color 0.2s;
+    background: #fff;
+}
+.devexa-search-input-wrap input:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
+.devexa-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: #999; }
+.devexa-search-spinner {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px; border: 2px solid #e0e0e0; border-top-color: #7c3aed;
+    border-radius: 50%; animation: devexa-spin 0.6s linear infinite;
+}
+.devexa-search-clear {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; font-size: 18px; color: #999; cursor: pointer; line-height: 1;
+}
+.devexa-search-clear:hover { color: #333; }
+@keyframes devexa-spin { to { transform: translateY(-50%) rotate(360deg); } }
+
+/* Results dropdown — full page width */
+.devexa-search-results {
+    position: fixed; z-index: 100; left: 0; right: 0; top: 0;
+    margin-top: 70px; /* approximate header height */
+    background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    border-top: 1px solid #e8e8e8; max-height: 80vh; overflow-y: auto;
+}
+.devexa-search-results-inner {
+    max-width: 1280px; margin: 0 auto; padding: 16px 24px;
+}
+.devexa-search-overlay {
+    position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,0.15);
+}
+
+/* Sections */
+.devexa-section-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 16px; background: #f9fafb; border-bottom: 1px solid #f0f0f0;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; letter-spacing: 0.05em;
+}
+.devexa-count { font-weight: 400; }
+
+/* Product items */
+.devexa-product-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px; text-decoration: none; color: inherit;
+    border-bottom: 1px solid #f5f5f5; transition: background 0.15s;
+}
+.devexa-product-item:last-child { border-bottom: none; }
+.devexa-product-item:hover, .devexa-product-item:focus { background: #f9fafb; outline: none; }
+.devexa-product-img { width: 48px; height: 48px; object-fit: contain; border-radius: 4px; background: #f9f9f9; flex-shrink: 0; }
+.devexa-product-info { flex: 1; min-width: 0; }
+.devexa-product-name { font-size: 14px; font-weight: 500; color: #333; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.devexa-product-sku { font-size: 11px; color: #999; margin: 2px 0 0; }
+.devexa-product-price { font-size: 14px; font-weight: 700; color: #7c3aed; flex-shrink: 0; }
+.devexa-ai-badge {
+    display: inline-block; padding: 2px 6px; border-radius: 3px;
+    font-size: 10px; font-weight: 600; background: #ede9fe; color: #7c3aed; flex-shrink: 0;
+}
+
+/* Link items (categories, pages) */
+.devexa-link-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px; text-decoration: none; color: #555;
+    font-size: 14px; border-bottom: 1px solid #f5f5f5; transition: background 0.15s;
+}
+.devexa-link-item:last-child { border-bottom: none; }
+.devexa-link-item:hover, .devexa-link-item:focus { background: #f9fafb; color: #333; outline: none; }
+.devexa-link-icon { font-size: 14px; flex-shrink: 0; opacity: 0.5; }
+
+/* Highlight */
+.devexa-highlight { background: rgba(124,58,237,0.12); color: #7c3aed; padding: 0 2px; border-radius: 2px; }
+
+/* View all */
+.devexa-view-all {
+    display: block; padding: 12px; text-align: center;
+    font-size: 14px; font-weight: 500; color: #7c3aed; text-decoration: none;
+    border-top: 1px solid #f0f0f0; transition: background 0.15s;
+}
+.devexa-view-all:hover { background: #f5f3ff; }
+
+/* No results */
+.devexa-no-results { padding: 32px; text-align: center; color: #999; font-size: 14px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .devexa-search-results { max-height: 70vh; }
+    .devexa-search-results-inner { padding: 12px 16px; }
+    .devexa-product-img { width: 40px; height: 40px; }
+    .devexa-product-item { padding: 8px 12px; gap: 8px; }
+    .devexa-product-name { font-size: 13px; }
+    .devexa-product-price { font-size: 13px; }
+    .devexa-section-header { padding: 6px 12px; }
+    .devexa-link-item { padding: 6px 12px; font-size: 13px; }
+    .devexa-view-all { padding: 10px; font-size: 13px; }
+    .devexa-rec-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 480px) {
+    .devexa-search-results { left: 4px; right: 4px; }
+    .devexa-product-item { flex-wrap: wrap; }
+}

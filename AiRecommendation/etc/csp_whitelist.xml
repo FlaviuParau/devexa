@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<csp_whitelist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Csp:etc/csp_whitelist.xsd">
+    <policies>
+        <policy id="connect-src">
+            <values>
+                <value id="devexa_api_prod" type="host">api.devexa.ro</value>
+                <value id="devexa_api_dev" type="host">host.docker.internal:3443</value>
+                <value id="devexa_api_local" type="host">localhost:3443</value>
+            </values>
+        </policy>
+    </policies>
+</csp_whitelist>

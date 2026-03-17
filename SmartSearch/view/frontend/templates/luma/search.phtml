@@ -1,0 +1,186 @@
+<?php
+/**
+ * Devexa Smart Search — Luma-compatible autocomplete popup
+ * Uses vanilla JavaScript, standard CSS. No Tailwind or Alpine.js.
+ *
+ * @var \Magento\Framework\View\Element\Template $block
+ * @var \Magento\Framework\Escaper $escaper
+ * @var \Devexa\SmartSearch\ViewModel\SearchConfig $searchConfig
+ */
+$searchConfig = $block->getData('search_config');
+if (!$searchConfig || !$searchConfig->isEnabled()) {
+    return;
+}
+
+$jsConfig = $searchConfig->getJsConfig();
+$suggestUrl = $block->getUrl('smartsearch/ajax/suggest');
+$searchUrl = $block->getUrl('catalogsearch/result');
+?>
+
+<link rel="stylesheet" href="<?= $escaper->escapeUrl($block->getViewFileUrl('Devexa_SmartSearch::css/smartsearch.css')) ?>">
+
+<div class="devexa-search-wrapper" id="devexa-smart-search">
+    <div class="devexa-search-input-wrap">
+        <svg class="devexa-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text"
+               id="devexa-search-input"
+               placeholder="<?= $escaper->escapeHtmlAttr(__('Search products, categories, pages...')) ?>"
+               autocomplete="off"
+               aria-label="<?= $escaper->escapeHtmlAttr(__('Search')) ?>"
+        >
+        <span id="devexa-search-spinner" class="devexa-search-spinner" style="display:none"></span>
+        <button id="devexa-search-clear" class="devexa-search-clear" style="display:none" type="button">&times;</button>
+    </div>
+    <div id="devexa-search-results" class="devexa-search-results" style="display:none"></div>
+    <div id="devexa-search-overlay" class="devexa-search-overlay" style="display:none"></div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    var config = <?= /* @noEscape */ json_encode($jsConfig) ?>;
+    var suggestUrl = '<?= $escaper->escapeUrl($suggestUrl) ?>';
+    var searchUrl = '<?= $escaper->escapeUrl($searchUrl) ?>';
+    var timer = null;
+
+    var input = document.getElementById('devexa-search-input');
+    var results = document.getElementById('devexa-search-results');
+    var overlay = document.getElementById('devexa-search-overlay');
+    var spinner = document.getElementById('devexa-search-spinner');
+    var clearBtn = document.getElementById('devexa-search-clear');
+
+    if (!input) return;
+
+    function close() {
+        results.style.display = 'none';
+        overlay.style.display = 'none';
+    }
+
+    function highlight(text, query) {
+        if (!query || !text) return text || '';
+        var words = query.trim().split(/\s+/).filter(function(w) { return w.length > 1; });
+        var result = text;
+        words.forEach(function(word) {
+            var escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            result = result.replace(new RegExp('(' + escaped + ')', 'gi'),
+                '<mark class="devexa-highlight">$1</mark>');
+        });
+        return result;
+    }
+
+    // Set header height for fixed positioning
+    // Position popup below search input
+    function positionPopup() {
+        var rect = input.getBoundingClientRect();
+        results.style.top = (rect.bottom + 4) + 'px';
+        results.style.marginTop = '0';
+    }
+
+    function renderResults(data) {
+        var sections = data.sections || [];
+        if (sections.length === 0) {
+            results.innerHTML = '<div class="devexa-search-results-inner"><div class="devexa-no-results"><?= $escaper->escapeJs(__('No results found')) ?></div></div>';
+            results.style.display = 'block';
+            overlay.style.display = 'block';
+            return;
+        }
+
+        var html = '<div class="devexa-search-results-inner">';
+        sections.forEach(function(section) {
+            html += '<div class="devexa-section">';
+            html += '<div class="devexa-section-header"><span>' + section.title + '</span><span class="devexa-count">' + section.count + '</span></div>';
+
+            section.items.forEach(function(item) {
+                if (section.type === 'products' || section.type === 'ai_recommendations') {
+                    html += '<a href="' + item.url + '" class="devexa-product-item" data-search-item>';
+                    if (config.showImage && item.image) {
+                        html += '<img src="' + item.image + '" alt="" class="devexa-product-img" loading="lazy">';
+                    }
+                    html += '<div class="devexa-product-info">';
+                    html += '<p class="devexa-product-name">' + highlight(item.name, data.query) + '</p>';
+                    if (config.showSku && item.sku) {
+                        html += '<p class="devexa-product-sku">SKU: ' + item.sku + '</p>';
+                    }
+                    html += '</div>';
+                    if (config.showPrice && item.price) {
+                        html += '<span class="devexa-product-price">' + item.price + '</span>';
+                    }
+                    if (item.ai) {
+                        html += '<span class="devexa-ai-badge">AI</span>';
+                    }
+                    html += '</a>';
+                } else {
+                    var icon = section.type === 'categories' ? '&#128193;' : '&#128196;';
+                    html += '<a href="' + item.url + '" class="devexa-link-item" data-search-item>';
+                    html += '<span class="devexa-link-icon">' + icon + '</span>';
+                    html += '<span>' + highlight(item.name || item.title, data.query) + '</span>';
+                    html += '</a>';
+                }
+            });
+
+            html += '</div>';
+        });
+
+        if (data.total > 0) {
+            html += '<a href="' + searchUrl + '?q=' + encodeURIComponent(data.query) + '" class="devexa-view-all">';
+            html += '<?= $escaper->escapeJs(__('View all results for')) ?> "' + data.query + '"</a>';
+        }
+
+        html += '</div>'; // close devexa-search-results-inner
+        results.innerHTML = html;
+        positionPopup();
+        results.style.display = 'block';
+        overlay.style.display = 'block';
+    }
+
+    function doSearch() {
+        var query = input.value.trim();
+        if (query.length < config.minChars) {
+            close();
+            return;
+        }
+
+        spinner.style.display = '';
+        fetch(suggestUrl + '?q=' + encodeURIComponent(query))
+            .then(function(r) { return r.json(); })
+            .then(function(data) { renderResults(data); })
+            .catch(function() { close(); })
+            .finally(function() { spinner.style.display = 'none'; });
+    }
+
+    input.addEventListener('input', function() {
+        clearBtn.style.display = input.value.length > 0 ? '' : 'none';
+        clearTimeout(timer);
+        timer = setTimeout(doSearch, config.debounceMs);
+    });
+
+    input.addEventListener('focus', function() {
+        if (results.innerHTML && input.value.length >= config.minChars) {
+            results.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+    });
+
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            window.location.href = searchUrl + '?q=' + encodeURIComponent(input.value);
+        } else if (e.key === 'Escape') {
+            close();
+        }
+    });
+
+    clearBtn.addEventListener('click', function() {
+        input.value = '';
+        clearBtn.style.display = 'none';
+        close();
+        input.focus();
+    });
+
+    overlay.addEventListener('click', close);
+    document.addEventListener('click', function(e) {
+        if (!document.getElementById('devexa-smart-search').contains(e.target)) close();
+    });
+})();
+</script>

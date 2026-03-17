@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="devexa" translate="title" sortOrder="900">
+            <label>Devexa</label>
+        </tab>
+        <section id="devexa_smart_search" translate="label" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>Smart Search</label>
+            <tab>devexa</tab>
+            <resource>Devexa_SmartSearch::config</resource>
+
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Smart Search</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="min_chars" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Minimum Characters</label>
+                    <comment>Start searching after this many characters typed</comment>
+                    <validate>validate-digits</validate>
+                </field>
+                <field id="debounce_ms" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Search Delay (ms)</label>
+                    <comment>Debounce delay before sending search request</comment>
+                    <validate>validate-digits</validate>
+                </field>
+            </group>
+
+            <group id="sections" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Search Sections</label>
+                <field id="products_enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show Products</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="products_limit" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Max Products</label>
+                    <validate>validate-digits</validate>
+                </field>
+                <field id="categories_enabled" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show Categories</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="categories_limit" translate="label" type="text" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Max Categories</label>
+                    <validate>validate-digits</validate>
+                </field>
+                <field id="pages_enabled" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show CMS Pages</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="pages_limit" translate="label" type="text" sortOrder="35" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Max CMS Pages</label>
+                    <validate>validate-digits</validate>
+                </field>
+                <field id="ai_enabled" translate="label comment" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show AI Recommendations</label>
+                    <comment>Requires active AI Recommendations subscription on Devexa Platform</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="ai_limit" translate="label" type="text" sortOrder="45" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Max AI Recommendations</label>
+                    <validate>validate-digits</validate>
+                </field>
+            </group>
+
+            <!-- AI Engine uses Devexa Core License & Platform config -->
+
+            <group id="layout" translate="label" type="text" sortOrder="35" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Layout</label>
+                <field id="product_display" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Product Display Mode</label>
+                    <comment>How products are displayed in the search popup</comment>
+                    <source_model>Devexa\SmartSearch\Model\Config\Source\ProductDisplay</source_model>
+                </field>
+                <field id="product_columns" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Products Per Row (Grid Mode)</label>
+                    <comment>Number of product columns in grid mode</comment>
+                    <source_model>Devexa\SmartSearch\Model\Config\Source\ProductColumns</source_model>
+                    <depends>
+                        <field id="product_display">grid</field>
+                    </depends>
+                </field>
+                <field id="sidebar_position" translate="label comment" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Categories &amp; Pages Position</label>
+                    <comment>Where to show categories and CMS pages relative to products</comment>
+                    <source_model>Devexa\SmartSearch\Model\Config\Source\SidebarPosition</source_model>
+                </field>
+                <field id="popup_max_width" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Popup Max Width (px)</label>
+                    <comment>Maximum width on desktop. On mobile the popup is always full-width. 0 = match search input width.</comment>
+                    <validate>validate-digits</validate>
+                </field>
+            </group>
+
+            <group id="filters" translate="label" type="text" sortOrder="38" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Search Filters</label>
+                <field id="exclude_words" translate="label comment" type="textarea" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Exclude Words (Stop Words)</label>
+                    <comment>Comma-separated words to ignore in search queries. These are stripped before searching. Default: the, and, or, a, an, is, it, to, of, in, for, on, with</comment>
+                </field>
+                <field id="in_stock_only" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show Only In-Stock Products</label>
+                    <comment>Hide out-of-stock products from search results</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="min_price" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Minimum Price Filter</label>
+                    <comment>Only show products above this price. 0 = no minimum.</comment>
+                    <validate>validate-number</validate>
+                </field>
+                <field id="max_price" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Maximum Price Filter</label>
+                    <comment>Only show products below this price. 0 = no maximum.</comment>
+                    <validate>validate-number</validate>
+                </field>
+                <field id="exclude_categories" translate="label comment" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Exclude Category IDs</label>
+                    <comment>Comma-separated category IDs to exclude from category search results</comment>
+                </field>
+                <field id="exclude_skus" translate="label comment" type="textarea" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Exclude Product SKUs</label>
+                    <comment>Comma-separated SKUs to never show in search results</comment>
+                </field>
+            </group>
+
+            <group id="appearance" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Appearance</label>
+                <field id="highlight_color" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Highlight Color</label>
+                </field>
+                <field id="show_product_image" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show Product Image</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="show_product_price" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show Product Price</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="show_product_sku" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show Product SKU</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="show_product_description" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show Product Description</label>
+                    <comment>Show short description snippet in search results</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

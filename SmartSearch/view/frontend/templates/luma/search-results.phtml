@@ -1,0 +1,113 @@
+<?php
+/**
+ * Devexa Smart Search — Enhanced search results page (Luma)
+ * Renders categories, CMS pages, and AI recommendations above default results.
+ *
+ * @var \Devexa\SmartSearch\Block\SearchResults $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+
+if (!$block->isEnabled()) {
+    return;
+}
+
+$query = $block->getQuery();
+$categories = $block->getCategories();
+$pages = $block->getPages();
+$aiProducts = $block->getAiProducts();
+
+if (empty($categories) && empty($pages) && empty($aiProducts)) {
+    return;
+}
+?>
+
+<style>
+.devexa-results-section { margin-bottom: 24px; }
+.devexa-results-title { font-size: 13px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+.devexa-results-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.devexa-results-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+    text-decoration: none; color: #555; font-size: 14px; transition: all 0.15s;
+}
+.devexa-results-pill:hover { border-color: #7c3aed; color: #7c3aed; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.devexa-results-pill svg { width: 16px; height: 16px; opacity: 0.5; }
+.devexa-ai-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+@media (min-width: 768px) { .devexa-ai-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1024px) { .devexa-ai-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1280px) { .devexa-ai-grid { grid-template-columns: repeat(5, 1fr); } }
+</style>
+
+<div class="devexa-search-results-enhanced" style="margin-bottom:32px;">
+
+    <?php if (!empty($categories)): ?>
+    <div class="devexa-results-section">
+        <h3 class="devexa-results-title">
+            <?= $escaper->escapeHtml(__('Categories matching "%1"', $query)) ?>
+        </h3>
+        <div class="devexa-results-pills">
+            <?php foreach ($categories as $cat): ?>
+                <a href="<?= $escaper->escapeUrl($cat['url']) ?>" class="devexa-results-pill">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                    <?= $escaper->escapeHtml($cat['name']) ?>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($pages)): ?>
+    <div class="devexa-results-section">
+        <h3 class="devexa-results-title">
+            <?= $escaper->escapeHtml(__('Pages matching "%1"', $query)) ?>
+        </h3>
+        <div class="devexa-results-pills">
+            <?php foreach ($pages as $page): ?>
+                <a href="<?= $escaper->escapeUrl($page['url']) ?>" class="devexa-results-pill">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <?= $escaper->escapeHtml($page['title']) ?>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($aiProducts)): ?>
+    <div class="devexa-results-section">
+        <h3 class="devexa-results-title">
+            <?= $escaper->escapeHtml(__('Recommended for "%1"', $query)) ?>
+        </h3>
+        <div class="devexa-ai-grid">
+            <?php foreach ($aiProducts as $product): ?>
+                <?php
+                $imageHelper = $block->getLayout()->createBlock(\Magento\Catalog\Helper\Image::class);
+                $imageUrl = '';
+                try {
+                    $imageUrl = $imageHelper->init($product, 'category_page_grid')
+                        ->setImageFile($product->getSmallImage())
+                        ->getUrl();
+                } catch (\Exception $e) {}
+
+                $priceHelper = \Magento\Framework\App\ObjectManager::getInstance()->get(\Magento\Framework\Pricing\Helper\Data::class);
+                ?>
+                <div class="product-item" style="background:#fff;border:1px solid #e8e8e8;border-radius:4px;overflow:hidden;">
+                    <a href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>" style="text-decoration:none;color:inherit;display:block;">
+                        <?php if ($imageUrl): ?>
+                            <img src="<?= $escaper->escapeUrl($imageUrl) ?>" alt="<?= $escaper->escapeHtmlAttr($product->getName()) ?>"
+                                 style="width:100%;aspect-ratio:1;object-fit:contain;background:#fafafa;" loading="lazy">
+                        <?php endif; ?>
+                        <div style="padding:12px;">
+                            <p style="font-size:14px;font-weight:500;margin-bottom:4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                                <?= $escaper->escapeHtml($product->getName()) ?>
+                            </p>
+                            <p style="font-size:14px;font-weight:700;color:#7c3aed;">
+                                <?= /* @noEscape */ $priceHelper->currency($product->getFinalPrice(), true, false) ?>
+                            </p>
+                        </div>
+                    </a>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+</div>

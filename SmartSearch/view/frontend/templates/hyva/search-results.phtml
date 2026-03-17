@@ -1,0 +1,109 @@
+<?php
+/**
+ * Devexa Smart Search — Enhanced search results page sections
+ * Renders categories, CMS pages, and AI recommendations above the default product listing.
+ * Products use the native Hyva ProductListItem template for consistent styling.
+ *
+ * @var \Devexa\SmartSearch\Block\SearchResults $block
+ * @var \Magento\Framework\Escaper $escaper
+ * @var \Hyva\Theme\Model\ViewModelRegistry $viewModels
+ */
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\ProductListItem;
+use Magento\Catalog\Block\Product\ReviewRendererInterface as ProductReviewRenderer;
+
+/** @var ViewModelRegistry $viewModels */
+/** @var ProductListItem $productListItemViewModel */
+$productListItemViewModel = $viewModels->require(ProductListItem::class);
+
+if (!$block->isEnabled()) {
+    return;
+}
+
+$query = $block->getQuery();
+$categories = $block->getCategories();
+$pages = $block->getPages();
+$aiProducts = $block->getAiProducts();
+
+$viewMode = 'grid';
+$imageDisplayArea = 'category_page_grid';
+$showDescription = false;
+
+$sliderItemRenderer = $block->getLayout()->getBlock('product_list_item')
+    ?: $block->getLayout()->createBlock(\Magento\Framework\View\Element\Template::class);
+
+// If nothing extra to show, don't render
+if (empty($categories) && empty($pages) && empty($aiProducts)) {
+    return;
+}
+?>
+
+<div class="devexa-search-results-enhanced mb-8">
+
+    <?php if (!empty($categories) || !empty($pages)): ?>
+    <!-- Categories & Pages found -->
+    <div class="mb-6">
+        <?php if (!empty($categories)): ?>
+            <div class="mb-4">
+                <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    <?= $escaper->escapeHtml(__('Categories matching "%1"', $query)) ?>
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    <?php foreach ($categories as $cat): ?>
+                        <a href="<?= $escaper->escapeUrl($cat['url']) ?>"
+                           class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:border-primary-300 hover:shadow-sm transition text-sm text-gray-700 hover:text-primary-700">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                            </svg>
+                            <?= $escaper->escapeHtml($cat['name']) ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($pages)): ?>
+            <div class="mb-4">
+                <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    <?= $escaper->escapeHtml(__('Pages matching "%1"', $query)) ?>
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    <?php foreach ($pages as $page): ?>
+                        <a href="<?= $escaper->escapeUrl($page['url']) ?>"
+                           class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:border-primary-300 hover:shadow-sm transition text-sm text-gray-700 hover:text-primary-700">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <?= $escaper->escapeHtml($page['title']) ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($aiProducts)): ?>
+    <!-- AI Recommended Products — uses native Hyva product card template -->
+    <div class="mb-8">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+            <?= $escaper->escapeHtml(__('Recommended for "%1"', $query)) ?>
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <?php foreach ($aiProducts as $product): ?>
+                <?php $product->setData('display_product_stock_status', true); ?>
+                <?= /** @noEscape */ $productListItemViewModel->getItemHtmlWithRenderer(
+                    $sliderItemRenderer,
+                    $product,
+                    $block,
+                    $viewMode,
+                    ProductReviewRenderer::SHORT_VIEW,
+                    $imageDisplayArea,
+                    $showDescription
+                ) ?>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+</div>

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <!-- Override the existing header-search block with SmartSearch template -->
+        <referenceBlock name="header-search" template="Devexa_SmartSearch::hyva/search.phtml">
+            <arguments>
+                <argument name="search_config" xsi:type="object">Devexa\SmartSearch\ViewModel\SearchConfig</argument>
+            </arguments>
+        </referenceBlock>
+
+        <!-- Remove the theme's default search sub-blocks (we replace them) -->
+        <referenceBlock name="header-search-categories" remove="true"/>
+        <referenceBlock name="header-search-products" remove="true"/>
+        <referenceBlock name="search-loading" remove="true"/>
+        <referenceBlock name="devexa.smart.search" remove="true"/>
+    </body>
+</page>

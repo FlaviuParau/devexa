@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <!-- Insert enhanced search sections above the default product listing -->
+        <referenceContainer name="content">
+            <block class="Devexa\SmartSearch\Block\SearchResults"
+                   name="devexa.smart.search.results"
+                   template="Devexa_SmartSearch::luma/search-results.phtml"
+                   before="search.result"/>
+        </referenceContainer>
+    </body>
+</page>

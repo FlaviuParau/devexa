@@ -1,0 +1,103 @@
+<?php
+/**
+ * @var \Magento\Framework\View\Element\Template $block
+ * @var \Devexa\AiRecommendation\ViewModel\Tracker $trackerVm
+ */
+$trackerVm = $block->getData('tracker_view_model');
+
+if (!$trackerVm->isEnabled()) {
+    return;
+}
+
+$trackingConfig = $trackerVm->getTrackingConfig();
+?>
+<script>
+    (function() {
+        'use strict';
+
+        var config = <?= /* @noEscape */ json_encode($trackingConfig) ?>;
+        var trackUrl = '<?= $block->escapeUrl($block->getUrl('airecommendation/track/event')) ?>';
+        var visitorId = getVisitorId();
+
+        function getVisitorId() {
+            var id = localStorage.getItem('devexa_visitor_id');
+            if (!id) {
+                id = 'v_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+                localStorage.setItem('devexa_visitor_id', id);
+            }
+            return id;
+        }
+
+        function trackEvent(eventType, data) {
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(trackUrl, JSON.stringify({
+                    event: eventType,
+                    data: data,
+                    visitor_id: visitorId
+                }));
+            } else {
+                fetch(trackUrl, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        event: eventType,
+                        data: data,
+                        visitor_id: visitorId
+                    }),
+                    keepalive: true
+                }).catch(function() {});
+            }
+        }
+
+        // Track product view
+        if (config.trackProductViews) {
+            var productIdMeta = document.querySelector('meta[property="product:id"], [data-product-id]');
+            if (productIdMeta) {
+                var pid = productIdMeta.getAttribute('content') || productIdMeta.getAttribute('data-product-id');
+                if (pid) {
+                    trackEvent('product_view', {product_id: pid});
+                }
+            }
+        }
+
+        // Track add to cart
+        if (config.trackAddToCart) {
+            document.addEventListener('click', function(e) {
+                var btn = e.target.closest('[data-post], .tocart, #product-addtocart-button');
+                if (!btn) return;
+
+                var form = btn.closest('form');
+                if (form) {
+                    var productInput = form.querySelector('input[name="product"]');
+                    if (productInput) {
+                        trackEvent('add_to_cart', {product_id: productInput.value});
+                    }
+                }
+            });
+        }
+
+        // Track search
+        if (config.trackSearch) {
+            var searchInput = document.querySelector('#search, input[name="q"]');
+            if (searchInput) {
+                var searchForm = searchInput.closest('form');
+                if (searchForm) {
+                    searchForm.addEventListener('submit', function() {
+                        trackEvent('search_query', {query: searchInput.value});
+                    });
+                }
+            }
+        }
+
+        // Track category view
+        if (config.trackCategoryViews) {
+            var categoryIdEl = document.querySelector('[data-category-id]');
+            if (categoryIdEl) {
+                trackEvent('category_view', {category_id: categoryIdEl.getAttribute('data-category-id')});
+            }
+        }
+
+        // Expose for external use
+        window.DevexaAiTracker = {trackEvent: trackEvent, visitorId: visitorId};
+    })();
+</script>

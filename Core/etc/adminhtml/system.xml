@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="devexa" translate="title" sortOrder="900">
+            <label>Devexa</label>
+        </tab>
+        <section id="devexa_core" translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+            <class>separator-top</class>
+            <label>License &amp; Platform</label>
+            <tab>devexa</tab>
+            <resource>Magento_Config::config</resource>
+
+            <group id="license" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                <label>License</label>
+                <field id="key" translate="label comment" type="obscure" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>License Key (API Key)</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment><![CDATA[Your Devexa Platform API key (dxk_...). Get it from <a href="https://ai.devexa.ro/admin" target="_blank">ai.devexa.ro</a>. This key is shared by all Devexa modules.]]></comment>
+                </field>
+                <field id="status" translate="label" type="label" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>License Status</label>
+                    <frontend_model>Devexa\Core\Block\Adminhtml\System\Config\LicenseStatus</frontend_model>
+                </field>
+            </group>
+
+            <group id="development" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Development</label>
+                <comment><![CDATA[<strong>For local development only.</strong> Override the platform URL to point to your local Devexa Platform instance. Leave empty to use the production platform (ai.devexa.ro).]]></comment>
+                <field id="enabled" translate="label comment" type="select" sortOrder="5" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Development Mode</label>
+                    <comment>When enabled, all modules will use the local platform URL below instead of ai.devexa.ro</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="platform_url" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Local Platform URL</label>
+                    <comment>e.g. https://host.docker.internal:3443 (for Docker) or https://localhost:3443</comment>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

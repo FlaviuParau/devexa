@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <devexa_core>
+            <license>
+                <key/>
+                <validation_url>https://ai.devexa.ro/v1/license/validate</validation_url>
+                <cache_hours>6</cache_hours>
+            </license>
+            <development>
+                <enabled>0</enabled>
+                <platform_url/>
+            </development>
+        </devexa_core>
+    </default>
+</config>

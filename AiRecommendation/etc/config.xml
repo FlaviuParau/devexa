@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <devexa_ai_recommendation>
+            <general>
+                <enabled>0</enabled>
+                <environment>production</environment>
+                <api_endpoint>https://api.devexa.ro/v1/recommendations</api_endpoint>
+                <api_endpoint_dev>https://host.docker.internal:3443/v1/recommendations</api_endpoint_dev>
+                <api_key/>
+            </general>
+            <tracking>
+                <track_product_views>1</track_product_views>
+                <track_add_to_cart>1</track_add_to_cart>
+                <track_purchases>1</track_purchases>
+                <track_search>1</track_search>
+                <track_category_views>1</track_category_views>
+            </tracking>
+            <widgets>
+                <show_on_product_page>1</show_on_product_page>
+                <show_on_cart_page>1</show_on_cart_page>
+                <show_on_homepage>1</show_on_homepage>
+                <show_on_category_page>0</show_on_category_page>
+                <algorithm>collaborative</algorithm>
+                <max_products>8</max_products>
+                <product_page_title>Recommended for You</product_page_title>
+                <cart_page_title>Frequently Bought Together</cart_page_title>
+                <homepage_title>You May Also Like</homepage_title>
+                <category_page_title>Customers Also Bought</category_page_title>
+            </widgets>
+        </devexa_ai_recommendation>
+    </default>
+</config>

@@ -1,0 +1,156 @@
+<?php
+/**
+ * AI Recommendations - Luma-compatible product list with carousel/grid support
+ *
+ * Uses standard Magento catalog product list rendering. No Tailwind or Alpine.js dependencies.
+ *
+ * @var \Devexa\AiRecommendation\Block\Recommendations $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+
+$items = $block->getItems();
+if (!$items || !count($items)) {
+    return;
+}
+
+$title = $block->getTitle();
+$displayMode = $block->getDisplayMode();
+$context = $block->getRecommendationContext();
+$itemCount = count($items);
+$imageHelper = $block->getLayout()->createBlock(\Magento\Catalog\Block\Product\ListProduct::class);
+?>
+
+<style>
+    .devexa-rec-section { margin: 40px 0; }
+    .devexa-rec-title {
+        font-size: 22px; font-weight: 600; color: #333;
+        padding-bottom: 12px; margin-bottom: 20px;
+        border-bottom: 2px solid #e0e0e0;
+    }
+    /* Grid mode */
+    .devexa-rec-grid {
+        display: grid; gap: 16px;
+        grid-template-columns: repeat(2, 1fr);
+    }
+    @media (min-width: 768px) { .devexa-rec-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 1024px) { .devexa-rec-grid { grid-template-columns: repeat(4, 1fr); } }
+    /* Carousel mode */
+    .devexa-rec-carousel {
+        display: flex; gap: 16px; overflow-x: auto;
+        scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; padding-bottom: 8px;
+    }
+    .devexa-rec-carousel::-webkit-scrollbar { display: none; }
+    .devexa-rec-carousel .devexa-rec-item {
+        flex: 0 0 calc(50% - 8px); scroll-snap-align: start;
+    }
+    @media (min-width: 768px) { .devexa-rec-carousel .devexa-rec-item { flex: 0 0 calc(33.333% - 11px); } }
+    @media (min-width: 1024px) { .devexa-rec-carousel .devexa-rec-item { flex: 0 0 calc(25% - 12px); } }
+    /* Item card */
+    .devexa-rec-item {
+        background: #fff; border: 1px solid #e8e8e8;
+        border-radius: 4px; overflow: hidden; transition: box-shadow 0.2s;
+    }
+    .devexa-rec-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+    .devexa-rec-item a { text-decoration: none; color: inherit; display: block; }
+    .devexa-rec-item-image {
+        width: 100%; aspect-ratio: 1; object-fit: contain;
+        background: #fafafa; display: block;
+    }
+    .devexa-rec-item-info { padding: 12px; }
+    .devexa-rec-item-name {
+        font-size: 14px; font-weight: 500; color: #333;
+        line-height: 1.3; margin-bottom: 6px;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        overflow: hidden; min-height: 36px;
+    }
+    .devexa-rec-item-price { font-size: 14px; font-weight: 700; color: #7c3aed; }
+    .devexa-rec-item-actions { padding: 0 12px 12px; }
+    .devexa-rec-item-actions button {
+        width: 100%; padding: 8px; border: none; border-radius: 4px;
+        background: #7c3aed; color: #fff; font-size: 13px; font-weight: 500;
+        cursor: pointer; transition: background 0.2s;
+    }
+    .devexa-rec-item-actions button:hover { background: #6d28d9; }
+    /* Carousel nav */
+    .devexa-rec-nav {
+        display: flex; justify-content: center; align-items: center;
+        gap: 8px; margin-top: 16px;
+    }
+    .devexa-rec-nav button {
+        background: none; border: 1px solid #ccc; border-radius: 50%;
+        width: 36px; height: 36px; cursor: pointer; font-size: 16px;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+    }
+    .devexa-rec-nav button:hover { border-color: #7c3aed; color: #7c3aed; }
+    .devexa-rec-nav button:disabled { opacity: 0.3; cursor: default; }
+</style>
+
+<div class="devexa-rec-section">
+    <h3 class="devexa-rec-title"><?= $escaper->escapeHtml($title) ?></h3>
+
+    <div class="devexa-rec-<?= $escaper->escapeHtmlAttr($displayMode) ?>" id="devexa-rec-<?= $escaper->escapeHtmlAttr($context) ?>">
+        <?php foreach ($items as $product): ?>
+            <div class="devexa-rec-item">
+                <a href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>">
+                    <?php
+                    $imageUrl = '';
+                    try {
+                        $imageBlock = $block->getLayout()->createBlock(\Magento\Catalog\Block\Product\Image::class);
+                        $imageUrl = $block->getLayout()
+                            ->createBlock(\Magento\Catalog\Helper\Image::class)
+                            ->init($product, 'category_page_grid')
+                            ->setImageFile($product->getSmallImage())
+                            ->getUrl();
+                    } catch (\Exception $e) {
+                        $imageUrl = '';
+                    }
+                    ?>
+                    <img class="devexa-rec-item-image"
+                         src="<?= $escaper->escapeUrl($imageUrl) ?>"
+                         alt="<?= $escaper->escapeHtmlAttr($product->getName()) ?>"
+                         loading="lazy" />
+                    <div class="devexa-rec-item-info">
+                        <div class="devexa-rec-item-name"><?= $escaper->escapeHtml($product->getName()) ?></div>
+                        <div class="devexa-rec-item-price">
+                            <?= /* @noEscape */ $block->getLayout()
+                                ->createBlock(\Magento\Framework\Pricing\Render::class)
+                                ->setData('price_render', 'product.price.render.default')
+                                ->setTemplate('Magento_Catalog::product/price/amount/default.phtml')
+                                ? $block->getLayout()->getBlock('product.price.render.default')
+                                    ? $block->getLayout()->getBlock('product.price.render.default')->render('final_price', $product, ['zone' => 'item_list'])
+                                    : number_format((float)$product->getFinalPrice(), 2)
+                                : number_format((float)$product->getFinalPrice(), 2) ?>
+                        </div>
+                    </div>
+                </a>
+                <div class="devexa-rec-item-actions">
+                    <form data-role="tocart-form" action="<?= $escaper->escapeUrl($block->getUrl('checkout/cart/add')) ?>" method="post">
+                        <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
+                        <input type="hidden" name="product" value="<?= $escaper->escapeHtmlAttr($product->getId()) ?>">
+                        <input type="hidden" name="qty" value="1">
+                        <button type="submit"><?= $escaper->escapeHtml(__('Add to Cart')) ?></button>
+                    </form>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <?php if ($displayMode === 'carousel' && $itemCount > 4): ?>
+        <div class="devexa-rec-nav">
+            <button type="button" onclick="devexaSlide('<?= $escaper->escapeJs($context) ?>', -1)" aria-label="<?= $escaper->escapeHtmlAttr(__('Previous')) ?>">&#8249;</button>
+            <button type="button" onclick="devexaSlide('<?= $escaper->escapeJs($context) ?>', 1)" aria-label="<?= $escaper->escapeHtmlAttr(__('Next')) ?>">&#8250;</button>
+        </div>
+        <script>
+            function devexaSlide(context, direction) {
+                var container = document.getElementById('devexa-rec-' + context);
+                if (!container) return;
+                var item = container.querySelector('.devexa-rec-item');
+                if (!item) return;
+                var scrollAmount = item.offsetWidth + 16;
+                container.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
+            }
+        </script>
+    <?php endif; ?>
+</div>

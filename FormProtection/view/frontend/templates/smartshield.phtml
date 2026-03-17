@@ -1,0 +1,41 @@
+<?php
+/**
+ * SmartShield - Invisible Form Protection
+ *
+ * In "analyze" mode: uses local JS + local validation (no external API)
+ * In "api" mode: loads JS from Devexa Platform + validates via SaaS API
+ *
+ * @var \Magento\Framework\View\Element\Template $block
+ * @var \Devexa\FormProtection\ViewModel\Protection $protectionVm
+ */
+$protectionVm = $block->getData('protection_view_model');
+
+if (!$protectionVm->isEnabled()) {
+    return;
+}
+
+$mode = $protectionVm->getMode();
+$jsConfig = $protectionVm->getJsConfig();
+
+if ($mode === 'api') {
+    // SaaS mode: load JS from platform, validate via platform API
+    $apiKey = $protectionVm->getApiKey();
+    $scriptUrl = $protectionVm->getScriptUrl();
+    $jsConfig['apiKey'] = $apiKey;
+    // validateUrl is auto-detected from script URL in platform JS
+    ?>
+    <script>
+        window.SmartShieldConfig = <?= /* @noEscape */ json_encode($jsConfig) ?>;
+    </script>
+    <script src="<?= $block->escapeUrl($scriptUrl) ?>?key=<?= $block->escapeUrl($apiKey) ?>" defer></script>
+    <?php
+} else {
+    // Local analyze mode: use local JS + local Magento controller
+    $jsConfig['validateUrl'] = $block->getUrl('formprotection/validate/index');
+    ?>
+    <script>
+        window.SmartShieldConfig = <?= /* @noEscape */ json_encode($jsConfig) ?>;
+    </script>
+    <script src="<?= $block->escapeUrl($block->getViewFileUrl('Devexa_FormProtection::js/smartshield.js')) ?>" defer></script>
+    <?php
+}

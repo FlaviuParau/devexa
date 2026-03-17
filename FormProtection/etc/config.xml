@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <devexa_form_protection>
+            <general>
+                <enabled>0</enabled>
+                <environment>production</environment>
+                <api_endpoint>https://api.devexa.ro/v1/form-protection/validate</api_endpoint>
+                <api_endpoint_dev>https://host.docker.internal:3443/v1/form-protection/validate</api_endpoint_dev>
+                <api_key/>
+                <mode>analyze</mode>
+            </general>
+            <forms>
+                <protect_login>1</protect_login>
+                <protect_register>1</protect_register>
+                <protect_contact>1</protect_contact>
+                <protect_checkout>0</protect_checkout>
+                <protect_newsletter>1</protect_newsletter>
+                <protect_review>1</protect_review>
+                <custom_form_selectors/>
+                <exclude_form_selectors>form[action*="checkout/cart"], form.form-cart, #discount-coupon-form</exclude_form_selectors>
+            </forms>
+            <rules>
+                <blocked_countries/>
+                <blocked_ips/>
+                <typing_speed_threshold>20</typing_speed_threshold>
+                <min_time_on_page>2</min_time_on_page>
+                <risk_score_block_threshold>80</risk_score_block_threshold>
+                <risk_score_challenge_threshold>50</risk_score_challenge_threshold>
+                <require_mouse_movement>1</require_mouse_movement>
+            </rules>
+            <appearance>
+                <badge_text>Protected by SmartShield</badge_text>
+                <show_badge>1</show_badge>
+                <block_message>This submission has been blocked for security reasons.</block_message>
+                <challenge_type>delay</challenge_type>
+            </appearance>
+        </devexa_form_protection>
+    </default>
+</config>

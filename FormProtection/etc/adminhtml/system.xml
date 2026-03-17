@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="devexa" translate="title" sortOrder="900">
+            <label>Devexa</label>
+        </tab>
+        <section id="devexa_form_protection" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>SmartShield Form Protection</label>
+            <tab>devexa</tab>
+            <resource>Devexa_FormProtection::config</resource>
+
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General</label>
+                <comment><![CDATA[API Key and platform URL are configured in <strong>Devexa > License & Platform</strong>.]]></comment>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable SmartShield Protection</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="mode" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Protection Mode</label>
+                    <comment>Analyze = local rules only (free). API = validate via Devexa Platform (paid).</comment>
+                    <source_model>Devexa\FormProtection\Model\Config\Source\Mode</source_model>
+                </field>
+            </group>
+
+            <group id="forms" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Protected Forms</label>
+                <field id="protect_login" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Protect Login Form</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="protect_register" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Protect Registration Form</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="protect_contact" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Protect Contact Form</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="protect_checkout" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Protect Checkout Forms</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="protect_newsletter" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Protect Newsletter Form</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="protect_review" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Protect Review Form</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="custom_form_selectors" translate="label comment" type="textarea" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Custom Form Selectors (Include)</label>
+                    <comment>Comma-separated CSS selectors for additional custom forms to protect (e.g., #my-form, .custom-form)</comment>
+                </field>
+                <field id="exclude_form_selectors" translate="label comment" type="textarea" sortOrder="75" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Exclude Form Selectors (Ignore)</label>
+                    <comment><![CDATA[Comma-separated CSS selectors for forms to <strong>skip</strong> protection on. These forms will never be intercepted. Example: form[action*="cart"], .no-protect, #checkout-form]]></comment>
+                </field>
+            </group>
+
+            <group id="rules" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Protection Rules (Local / Analyze Mode Only)</label>
+                <comment><![CDATA[These rules apply only in <strong>Analyze mode</strong> (local). In <strong>API mode</strong>, all rules are managed on the <strong>Devexa Platform</strong> (ai.devexa.ro > Protection Rules).]]></comment>
+                <field id="blocked_countries" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Blocked Countries</label>
+                    <comment>Comma-separated ISO country codes (e.g., CN,RU,KP). Score +50 per match.</comment>
+                </field>
+                <field id="blocked_ips" translate="label comment" type="textarea" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Blocked IPs</label>
+                    <comment>One per line. Supports exact IP, CIDR (10.0.0.0/24), and wildcards (192.168.*). Score +40 per match.</comment>
+                </field>
+                <field id="typing_speed_threshold" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Typing Speed Threshold (ms)</label>
+                    <comment>Average milliseconds between keystrokes. Below this = suspicious (bots type instantly). Default: 20ms.</comment>
+                    <validate>validate-digits</validate>
+                </field>
+                <field id="min_time_on_page" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Minimum Time on Page (seconds)</label>
+                    <comment>Submissions faster than this are suspicious. Default: 2 seconds.</comment>
+                    <validate>validate-digits</validate>
+                </field>
+                <field id="require_mouse_movement" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Require Mouse Movement</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="risk_score_challenge_threshold" translate="label comment" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Challenge Threshold (score)</label>
+                    <comment>Score at or above this triggers a challenge. Default: 50.</comment>
+                    <validate>validate-digits</validate>
+                </field>
+                <field id="risk_score_block_threshold" translate="label comment" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Block Threshold (score)</label>
+                    <comment>Score at or above this blocks the submission. Default: 80.</comment>
+                    <validate>validate-digits</validate>
+                </field>
+            </group>
+
+            <group id="appearance" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Appearance</label>
+                <field id="show_badge" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show "Protected by SmartShield" Badge</label>
+                    <comment>Display a small badge below protected forms. Set to No to hide it completely.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="badge_text" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Badge Text</label>
+                    <comment>This text is translatable via Magento's i18n system (CSV translation files).</comment>
+                    <depends>
+                        <field id="show_badge">1</field>
+                    </depends>
+                </field>
+                <field id="block_message" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Block Message</label>
+                    <comment>Message shown when a submission is blocked. Also translatable via CSV.</comment>
+                </field>
+                <field id="challenge_type" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Challenge Type</label>
+                    <source_model>Devexa\FormProtection\Model\Config\Source\ChallengeType</source_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
