@@ -16,6 +16,8 @@ if (!$items || !count($items)) {
 $title = $block->getTitle();
 $displayMode = $block->getDisplayMode();
 $context = $block->getRecommendationContext();
+$type = $block->getRecommendationType();
+$uniqueId = $context . '-' . $type;
 $itemCount = count($items);
 $imageHelper = $block->getLayout()->createBlock(\Magento\Catalog\Block\Product\ListProduct::class);
 ?>
@@ -90,7 +92,7 @@ $imageHelper = $block->getLayout()->createBlock(\Magento\Catalog\Block\Product\L
 <div class="devexa-rec-section">
     <h3 class="devexa-rec-title"><?= $escaper->escapeHtml($title) ?></h3>
 
-    <div class="devexa-rec-<?= $escaper->escapeHtmlAttr($displayMode) ?>" id="devexa-rec-<?= $escaper->escapeHtmlAttr($context) ?>">
+    <div class="devexa-rec-<?= $escaper->escapeHtmlAttr($displayMode) ?>" id="devexa-rec-<?= $escaper->escapeHtmlAttr($uniqueId) ?>">
         <?php foreach ($items as $product): ?>
             <div class="devexa-rec-item">
                 <a href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>">
@@ -126,12 +128,18 @@ $imageHelper = $block->getLayout()->createBlock(\Magento\Catalog\Block\Product\L
                     </div>
                 </a>
                 <div class="devexa-rec-item-actions">
-                    <form data-role="tocart-form" action="<?= $escaper->escapeUrl($block->getUrl('checkout/cart/add')) ?>" method="post">
-                        <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
-                        <input type="hidden" name="product" value="<?= $escaper->escapeHtmlAttr($product->getId()) ?>">
-                        <input type="hidden" name="qty" value="1">
-                        <button type="submit"><?= $escaper->escapeHtml(__('Add to Cart')) ?></button>
-                    </form>
+                    <?php if ($product->getTypeId() === 'simple' || $product->getTypeId() === 'virtual'): ?>
+                        <form data-role="tocart-form" action="<?= $escaper->escapeUrl($block->getUrl('checkout/cart/add')) ?>" method="post">
+                            <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
+                            <input type="hidden" name="product" value="<?= $escaper->escapeHtmlAttr($product->getId()) ?>">
+                            <input type="hidden" name="qty" value="1">
+                            <button type="submit"><?= $escaper->escapeHtml(__('Add to Cart')) ?></button>
+                        </form>
+                    <?php else: ?>
+                        <a href="<?= $escaper->escapeUrl($product->getProductUrl()) ?>" class="devexa-rec-choose-options">
+                            <button type="button"><?= $escaper->escapeHtml(__('Choose Options')) ?></button>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endforeach; ?>
@@ -139,8 +147,8 @@ $imageHelper = $block->getLayout()->createBlock(\Magento\Catalog\Block\Product\L
 
     <?php if ($displayMode === 'carousel' && $itemCount > 4): ?>
         <div class="devexa-rec-nav">
-            <button type="button" onclick="devexaSlide('<?= $escaper->escapeJs($context) ?>', -1)" aria-label="<?= $escaper->escapeHtmlAttr(__('Previous')) ?>">&#8249;</button>
-            <button type="button" onclick="devexaSlide('<?= $escaper->escapeJs($context) ?>', 1)" aria-label="<?= $escaper->escapeHtmlAttr(__('Next')) ?>">&#8250;</button>
+            <button type="button" onclick="devexaSlide('<?= $escaper->escapeJs($uniqueId) ?>', -1)" aria-label="<?= $escaper->escapeHtmlAttr(__('Previous')) ?>">&#8249;</button>
+            <button type="button" onclick="devexaSlide('<?= $escaper->escapeJs($uniqueId) ?>', 1)" aria-label="<?= $escaper->escapeHtmlAttr(__('Next')) ?>">&#8250;</button>
         </div>
         <script>
             function devexaSlide(context, direction) {

@@ -1,10 +1,10 @@
 <?php
 /**
- * AI Recommendations - Hyva-compatible product list with carousel/grid support
+ * Order Success Page - AI Recommendations (Hyva theme)
  *
- * Uses the same Hyva ProductListItem ViewModel and Alpine.js slider as native Hyva templates.
+ * Alpine.js carousel showing "Customers who bought these items also bought:" products
  *
- * @var \Devexa\AiRecommendation\Block\Recommendations $block
+ * @var \Devexa\AiRecommendation\Block\OrderSuccessRecommendations $block
  * @var \Magento\Framework\Escaper $escaper
  * @var \Hyva\Theme\Model\ViewModelRegistry $viewModels
  */
@@ -27,15 +27,11 @@ if (!$items || !count($items)) {
 }
 
 $title = $block->getTitle();
-$displayMode = $block->getDisplayMode(); // 'carousel' or 'grid'
-$context = $block->getRecommendationContext();
-$type = $block->getRecommendationType();
-$name = 'devexa-ai-rec-' . $context . '-' . $type;
+$name = 'devexa-ai-rec-order-success';
 $itemCount = count($items);
 $viewMode = 'grid';
 $imageDisplayArea = 'category_page_grid';
 $showDescription = false;
-$headingTag = 'h3';
 $sliderIndex = 1;
 $maxVisibleSlides = 4;
 $slideItemClasses = 'md:w-1/2 lg:w-1/3 xl:w-1/4';
@@ -44,11 +40,9 @@ $sliderItemRenderer = $block->getLayout()->getBlock('product_list_item')
     ?: $block->getLayout()->createBlock(\Magento\Framework\View\Element\Template::class);
 ?>
 
-<?php if ($displayMode === 'carousel'): ?>
-
 <script>
     'use strict';
-    function initDevexaSlider() {
+    function initDevexaOrderSuccessSlider() {
         return {
             active: 0,
             itemCount: 0,
@@ -94,7 +88,7 @@ $sliderItemRenderer = $block->getLayout()->getBlock('product_list_item')
 </script>
 <section
     class="my-12 body-font"
-    x-data="initDevexaSlider()"
+    x-data="initDevexaOrderSuccessSlider()"
     x-init="calcPageSize();"
     @resize.window.debounce="calcPageSize(); $nextTick( function() { calcActive() })"
     aria-roledescription="<?= $escaper->escapeHtmlAttr(__('Carousel')) ?>"
@@ -194,32 +188,3 @@ $sliderItemRenderer = $block->getLayout()->getBlock('product_list_item')
         <span id="<?= $escaper->escapeHtmlAttr($name) ?>-slider-end" tabindex="-1"></span>
     </div>
 </section>
-
-<?php else: ?>
-
-<!-- Grid Mode -->
-<section class="my-12 text-gray-700 body-font">
-    <?php if ($title): ?>
-        <div class="flex flex-col items-center pt-6 pb-3 px-6 mx-auto mb-6 border-b-2 border-gray-300 md:flex-row">
-            <<?= /* @noEscape */ $headingTag ?> class="text-2xl font-medium text-gray-900 title-font">
-                <?= $escaper->escapeHtml($title) ?>
-            </<?= /* @noEscape */ $headingTag ?>>
-        </div>
-    <?php endif; ?>
-    <div class="products wrapper mode-grid products-grid">
-        <div class="-mx-4 pt-4 pb-12 grid gap-2 grid-cols-2 sm:mx-auto md:grid-cols-3 lg:grid-cols-4">
-            <?php foreach ($items as $product): ?>
-                <?= /** @noEscape */ $productListItemViewModel->getItemHtml(
-                    $product,
-                    $block,
-                    $viewMode,
-                    ProductReviewRenderer::SHORT_VIEW,
-                    $imageDisplayArea,
-                    $showDescription
-                ) ?>
-            <?php endforeach ?>
-        </div>
-    </div>
-</section>
-
-<?php endif; ?>

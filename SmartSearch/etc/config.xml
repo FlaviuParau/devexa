@@ -21,7 +21,7 @@
             </sections>
             <ai>
                 <environment>production</environment>
-                <api_endpoint>https://api.devexa.ro/v1/search</api_endpoint>
+                <api_endpoint>https://ai.devexa.ro/v1/search</api_endpoint>
                 <api_endpoint_dev>https://host.docker.internal:3443/v1/search</api_endpoint_dev>
                 <api_key/>
             </ai>

@@ -68,6 +68,12 @@ class RuleEngine implements RuleEngineInterface
             $reasons[] = 'no_mouse_movement';
         }
 
+        // Rule: Honeypot triggered (definite bot — hidden fields were filled)
+        if (!empty($behaviorData['honeypot_triggered'])) {
+            $score = 100;
+            $reasons[] = 'honeypot_triggered';
+        }
+
         // Rule: Paste detected in fields
         if (!empty($behaviorData['paste_detected'])) {
             $score += 10;

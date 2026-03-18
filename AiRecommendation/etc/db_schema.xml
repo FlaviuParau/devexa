@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="devexa_rec_cache" resource="default" engine="innodb" comment="Devexa AI Recommendation Cache">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true" comment="Entity ID"/>
+        <column xsi:type="int" name="product_id" unsigned="true" nullable="false" comment="Product ID"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" default="0" comment="Store ID"/>
+        <column xsi:type="varchar" name="type" nullable="false" length="50" comment="Recommendation Type"/>
+        <column xsi:type="text" name="recommended_ids" nullable="true" comment="Comma-separated product IDs"/>
+        <column xsi:type="timestamp" name="updated_at" default="CURRENT_TIMESTAMP" on_update="true" comment="Last Updated"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="DEVEXA_REC_CACHE_PRODUCT_STORE_TYPE">
+            <column name="product_id"/>
+            <column name="store_id"/>
+            <column name="type"/>
+        </constraint>
+        <index referenceId="DEVEXA_REC_CACHE_PRODUCT_ID" indexType="btree">
+            <column name="product_id"/>
+        </index>
+        <index referenceId="DEVEXA_REC_CACHE_UPDATED" indexType="btree">
+            <column name="updated_at"/>
+        </index>
+    </table>
+</schema>

@@ -143,6 +143,63 @@ class ProductSearch
         }
     }
 
+    /**
+     * Get search suggestions by removing one word at a time from the query.
+     * Used as a "Did you mean" fallback when the original query returns 0 results.
+     */
+    public function getSuggestions(string $query, int $limit = 3): array
+    {
+        $words = preg_split('/\s+/', trim($query));
+        if (count($words) < 2) {
+            return [];
+        }
+
+        $suggestions = [];
+        for ($i = 0; $i < count($words); $i++) {
+            $subset = $words;
+            array_splice($subset, $i, 1);
+            $term = implode(' ', $subset);
+
+            if (empty(trim($term))) {
+                continue;
+            }
+
+            try {
+                $searchCriteria = $this->searchCriteriaFactory->create();
+                $filter = $this->filterBuilder
+                    ->setField('search_term')
+                    ->setValue($term)
+                    ->setConditionType('like')
+                    ->create();
+                $filterGroup = $this->filterGroupBuilder->addFilter($filter)->create();
+                $searchCriteria->setFilterGroups([$filterGroup]);
+                $searchCriteria->setRequestName('quick_search_container');
+                $searchCriteria->setPageSize(1);
+
+                $searchResult = $this->searchEngine->search($searchCriteria);
+                $count = $searchResult->getTotalCount();
+
+                if ($count > 0) {
+                    $suggestions[] = [
+                        'term' => $term,
+                        'count' => $count,
+                    ];
+                }
+            } catch (\Exception $e) {
+                $this->logger->debug('SmartSearch suggestion query failed: ' . $e->getMessage());
+            }
+
+            if (count($suggestions) >= $limit) {
+                break;
+            }
+        }
+
+        // Sort by result count descending
+        usort($suggestions, fn($a, $b) => $b['count'] - $a['count']);
+
+        return $suggestions;
+    }
+
     private function cleanQuery(string $query): string
     {
         $excludeWords = $this->config->getExcludeWords();
@@ -198,6 +255,9 @@ class ProductSearch
                 // placeholder
             }
 
+            $typeId = $product->getTypeId();
+            $hasOptions = in_array($typeId, ['configurable', 'grouped', 'bundle'], true);
+
             $item = [
                 'id' => $product->getId(),
                 'name' => $product->getName(),
@@ -208,6 +268,8 @@ class ProductSearch
                 'image_grid' => $gridUrl ?: $thumbUrl,
                 'price' => $this->pricingHelper->currency($price, true, false),
                 'price_raw' => $price,
+                'type_id' => $typeId,
+                'has_options' => $hasOptions,
             ];
 
             if ($showDescription && $product->getShortDescription()) {

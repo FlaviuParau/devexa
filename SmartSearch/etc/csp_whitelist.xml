@@ -4,7 +4,7 @@
     <policies>
         <policy id="connect-src">
             <values>
-                <value id="devexa_search_prod" type="host">api.devexa.ro</value>
+                <value id="devexa_search_prod" type="host">ai.devexa.ro</value>
                 <value id="devexa_search_dev" type="host">host.docker.internal:3443</value>
                 <value id="devexa_search_local" type="host">localhost:3443</value>
             </values>

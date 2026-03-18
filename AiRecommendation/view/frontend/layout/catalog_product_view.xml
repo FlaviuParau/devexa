@@ -4,11 +4,22 @@
     <body>
         <referenceContainer name="content">
             <block class="Devexa\AiRecommendation\Block\Recommendations"
-                   name="devexa.ai.recommendation.product"
+                   name="devexa.ai.recommendation.product.fbt"
                    template="Devexa_AiRecommendation::luma/recommendations.phtml"
                    after="-">
                 <arguments>
                     <argument name="recommendation_context" xsi:type="string">product</argument>
+                    <argument name="recommendation_type" xsi:type="string">frequently_bought</argument>
+                    <argument name="display_mode" xsi:type="string">carousel</argument>
+                </arguments>
+            </block>
+            <block class="Devexa\AiRecommendation\Block\Recommendations"
+                   name="devexa.ai.recommendation.product.similar"
+                   template="Devexa_AiRecommendation::luma/recommendations.phtml"
+                   after="devexa.ai.recommendation.product.fbt">
+                <arguments>
+                    <argument name="recommendation_context" xsi:type="string">product</argument>
+                    <argument name="recommendation_type" xsi:type="string">similar</argument>
                     <argument name="display_mode" xsi:type="string">carousel</argument>
                 </arguments>
             </block>

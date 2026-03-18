@@ -77,9 +77,65 @@ $searchUrl = $block->getUrl('catalogsearch/result');
         results.style.marginTop = '0';
     }
 
+    function getFormKey() {
+        var match = document.cookie.match(/form_key=([^;]+)/);
+        return match ? match[1] : '';
+    }
+
+    window.devexaSearchSuggestion = searchSuggestion;
+    window.devexaAddToCart = addToCart;
+
+    function addToCart(productId, productName, btn) {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.classList.add('devexa-btn-loading');
+        var formData = new FormData();
+        formData.append('product', productId);
+        formData.append('qty', 1);
+        formData.append('form_key', getFormKey());
+        fetch(window.BASE_URL ? window.BASE_URL + 'checkout/cart/add/' : '/checkout/cart/add/', { method: 'POST', body: formData })
+            .then(function(r) {
+                if (r.ok) {
+                    showCartToast(productName);
+                    // Trigger Magento section reload
+                    if (typeof require !== 'undefined') {
+                        require(['Magento_Customer/js/customer-data'], function(customerData) {
+                            customerData.reload(['cart'], true);
+                        });
+                    }
+                }
+            })
+            .catch(function() {})
+            .finally(function() { btn.disabled = false; btn.classList.remove('devexa-btn-loading'); });
+    }
+
+    function showCartToast(name) {
+        var toast = document.getElementById('devexa-cart-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'devexa-cart-toast';
+            toast.className = 'devexa-cart-toast';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = name + ' <?= $escaper->escapeJs(__('added to cart')) ?>';
+        toast.style.display = 'block';
+        toast.style.opacity = '1';
+        setTimeout(function() { toast.style.opacity = '0'; setTimeout(function() { toast.style.display = 'none'; }, 300); }, 3000);
+    }
+
+    function searchSuggestion(term) {
+        input.value = term;
+        clearBtn.style.display = term.length > 0 ? '' : 'none';
+        clearTimeout(timer);
+        doSearch();
+    }
+
     function renderResults(data) {
         var sections = data.sections || [];
-        if (sections.length === 0) {
+        var suggestions = data.suggestions || [];
+        var noResults = data.no_results || false;
+
+        if (sections.length === 0 && suggestions.length === 0) {
             results.innerHTML = '<div class="devexa-search-results-inner"><div class="devexa-no-results"><?= $escaper->escapeJs(__('No results found')) ?></div></div>';
             results.style.display = 'block';
             overlay.style.display = 'block';
@@ -87,13 +143,27 @@ $searchUrl = $block->getUrl('catalogsearch/result');
         }
 
         var html = '<div class="devexa-search-results-inner">';
+
+        // Did you mean suggestions
+        if (noResults && suggestions.length > 0) {
+            html += '<div class="devexa-suggestions">';
+            html += '<p class="devexa-suggestions-text"><?= $escaper->escapeJs(__('No results for')) ?> "' + (data.query || '') + '". <?= $escaper->escapeJs(__('Did you mean:')) ?></p>';
+            html += '<div class="devexa-suggestions-list">';
+            suggestions.forEach(function(s) {
+                html += '<button type="button" class="devexa-suggestion-btn" onclick="devexaSearchSuggestion(\'' + s.term.replace(/'/g, "\\'") + '\')">';
+                html += '<span>' + s.term + '</span> <small>(' + s.count + ')</small></button>';
+            });
+            html += '</div></div>';
+        }
+
         sections.forEach(function(section) {
             html += '<div class="devexa-section">';
             html += '<div class="devexa-section-header"><span>' + section.title + '</span><span class="devexa-count">' + section.count + '</span></div>';
 
             section.items.forEach(function(item) {
                 if (section.type === 'products' || section.type === 'ai_recommendations') {
-                    html += '<a href="' + item.url + '" class="devexa-product-item" data-search-item>';
+                    html += '<div class="devexa-product-item" data-search-item>';
+                    html += '<a href="' + item.url + '" class="devexa-product-link">';
                     if (config.showImage && item.image) {
                         html += '<img src="' + item.image + '" alt="" class="devexa-product-img" loading="lazy">';
                     }
@@ -110,6 +180,17 @@ $searchUrl = $block->getUrl('catalogsearch/result');
                         html += '<span class="devexa-ai-badge">AI</span>';
                     }
                     html += '</a>';
+                    // Add to Cart / View Options button
+                    if (!item.has_options) {
+                        html += '<button type="button" class="devexa-cart-btn" title="<?= $escaper->escapeHtmlAttr(__('Add to Cart')) ?>" onclick="devexaAddToCart(' + item.id + ', \'' + item.name.replace(/'/g, "\\'") + '\', this)">';
+                        html += '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>';
+                        html += '</button>';
+                    } else {
+                        html += '<a href="' + item.url + '" class="devexa-options-btn" title="<?= $escaper->escapeHtmlAttr(__('View Options')) ?>">';
+                        html += '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16m-7 6h7"/></svg>';
+                        html += '</a>';
+                    }
+                    html += '</div>';
                 } else {
                     var icon = section.type === 'categories' ? '&#128193;' : '&#128196;';
                     html += '<a href="' + item.url + '" class="devexa-link-item" data-search-item>';

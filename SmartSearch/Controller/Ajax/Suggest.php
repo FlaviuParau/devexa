@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Devexa\SmartSearch\Controller\Ajax;
 
+use Devexa\Core\Model\PlatformConfig;
 use Devexa\SmartSearch\Model\Config;
 use Devexa\SmartSearch\Model\Search\AiSearch;
 use Devexa\SmartSearch\Model\Search\CategorySearch;
@@ -12,6 +13,8 @@ use Devexa\SmartSearch\Model\Search\ProductSearch;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Framework\HTTP\Client\CurlFactory;
+use Magento\Framework\Serialize\Serializer\Json;
 
 class Suggest implements HttpGetActionInterface
 {
@@ -22,8 +25,45 @@ class Suggest implements HttpGetActionInterface
         private readonly ProductSearch $productSearch,
         private readonly CategorySearch $categorySearch,
         private readonly PageSearch $pageSearch,
-        private readonly AiSearch $aiSearch
+        private readonly AiSearch $aiSearch,
+        private readonly PlatformConfig $platformConfig,
+        private readonly CurlFactory $curlFactory,
+        private readonly Json $json
     ) {
+    }
+
+    /**
+     * Track search query to platform for analytics + AI training.
+     * Fire and forget — does not block the search response.
+     */
+    private function trackSearchQuery(string $query, int $resultCount): void
+    {
+        try {
+            $apiKey = $this->platformConfig->getApiKey();
+            if (empty($apiKey)) {
+                return;
+            }
+
+            $endpoint = $this->platformConfig->getServiceEndpoint('v1/recommendations/track');
+            $skipSsl = $this->platformConfig->shouldSkipSslVerify();
+
+            $curl = $this->curlFactory->create();
+            $curl->setOption(CURLOPT_SSL_VERIFYPEER, !$skipSsl);
+            $curl->setOption(CURLOPT_SSL_VERIFYHOST, $skipSsl ? 0 : 2);
+            $curl->addHeader('Content-Type', 'application/json');
+            $curl->addHeader('Authorization', 'Bearer ' . $apiKey);
+            $curl->setTimeout(2);
+            $curl->post($endpoint, $this->json->serialize([
+                'event' => 'search_query',
+                'data' => [
+                    'query' => $query,
+                    'result_count' => $resultCount,
+                ],
+                'visitor_id' => $_COOKIE['devexa_visitor'] ?? null,
+            ]));
+        } catch (\Exception $e) {
+            // Silent fail — tracking should never break search
+        }
     }
 
     public function execute()
@@ -131,8 +171,11 @@ class Suggest implements HttpGetActionInterface
             }
         }
 
-        // No results — show browse categories as fallback
+        // No results — get suggestions and show browse categories as fallback
+        $suggestions = [];
         if (empty($sections)) {
+            $suggestions = $this->productSearch->getSuggestions($query);
+
             $fallbackCategories = $this->categorySearch->getTopCategories(6);
             if (!empty($fallbackCategories)) {
                 $sections[] = [
@@ -144,11 +187,20 @@ class Suggest implements HttpGetActionInterface
             }
         }
 
-        return $result->setData([
+        $responseData = [
             'query' => $query,
             'sections' => $sections,
             'total' => array_sum(array_column($sections, 'count')),
             'no_results' => empty(array_filter($sections, fn($s) => $s['type'] !== 'browse_categories')),
-        ]);
+        ];
+
+        if (!empty($suggestions)) {
+            $responseData['suggestions'] = $suggestions;
+        }
+
+        // Track search query to platform (fire and forget)
+        $this->trackSearchQuery($query, $responseData['total']);
+
+        return $result->setData($responseData);
     }
 }

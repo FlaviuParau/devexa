@@ -9,7 +9,7 @@
  *   5. Restores action ONLY after validation passes
  *
  * Usage:
- *   <script src="https://api.devexa.ro/js/smartshield.js?key=dxk_xxx" defer></script>
+ *   <script src="https://ai.devexa.ro/js/smartshield.js?key=dxk_xxx" defer></script>
  */
 (function () {
     'use strict';
@@ -88,12 +88,20 @@
             }
             avgTypingSpeed = Math.round(intervals.reduce(function (a, b) { return a + b; }, 0) / intervals.length);
         }
+
+        // Check honeypot fields — any filled = bot
+        var honeypotTriggered = false;
+        document.querySelectorAll('input[name^="ss_hp_"]').forEach(function (hp) {
+            if (hp.value && hp.value.trim() !== '') honeypotTriggered = true;
+        });
+
         return {
             avg_typing_speed_ms: avgTypingSpeed,
             mouse_movements: behavior.mouse_movements,
             focus_events: behavior.focus_events,
             paste_detected: behavior.paste_detected,
-            time_on_page_seconds: Math.round((Date.now() - behavior.page_loaded_at) / 1000)
+            time_on_page_seconds: Math.round((Date.now() - behavior.page_loaded_at) / 1000),
+            honeypot_triggered: honeypotTriggered
         };
     }
 
@@ -250,6 +258,19 @@
             protectedActions[formId] = realAction;
             form.action = 'javascript:void(0)';
         }
+
+        // Honeypot — hidden fields that bots fill but humans don't see
+        var honeypotNames = ['website_url', 'phone_number_confirm', 'full_address'];
+        honeypotNames.forEach(function (name) {
+            var hp = document.createElement('input');
+            hp.type = 'text';
+            hp.name = 'ss_hp_' + name;
+            hp.tabIndex = -1;
+            hp.autocomplete = 'off';
+            hp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:0;height:0;opacity:0;pointer-events:none;';
+            hp.setAttribute('aria-hidden', 'true');
+            form.appendChild(hp);
+        });
 
         // Badge
         if (config.showBadge !== false && config.badgeText) {

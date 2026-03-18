@@ -6,7 +6,7 @@
             <general>
                 <enabled>0</enabled>
                 <environment>production</environment>
-                <api_endpoint>https://api.devexa.ro/v1/recommendations</api_endpoint>
+                <api_endpoint>https://ai.devexa.ro/v1/recommendations</api_endpoint>
                 <api_endpoint_dev>https://host.docker.internal:3443/v1/recommendations</api_endpoint_dev>
                 <api_key/>
             </general>
@@ -28,6 +28,10 @@
                 <cart_page_title>Frequently Bought Together</cart_page_title>
                 <homepage_title>You May Also Like</homepage_title>
                 <category_page_title>Customers Also Bought</category_page_title>
+                <fbt_title>Frequently Bought Together</fbt_title>
+                <similar_title>Similar Products</similar_title>
+                <upsell_title>You May Also Like</upsell_title>
+                <crosssell_title>Customers Also Bought</crosssell_title>
             </widgets>
         </devexa_ai_recommendation>
     </default>

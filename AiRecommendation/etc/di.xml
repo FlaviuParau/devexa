@@ -5,4 +5,12 @@
                 type="Devexa\AiRecommendation\Model\RecommendationEngine"/>
     <preference for="Devexa\AiRecommendation\Api\EventTrackerInterface"
                 type="Devexa\AiRecommendation\Model\EventTracker"/>
+
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="devexa_recommendations_prefetch" xsi:type="object">Devexa\AiRecommendation\Console\Command\PreFetchCommand</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

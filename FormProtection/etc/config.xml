@@ -6,7 +6,7 @@
             <general>
                 <enabled>0</enabled>
                 <environment>production</environment>
-                <api_endpoint>https://api.devexa.ro/v1/form-protection/validate</api_endpoint>
+                <api_endpoint>https://ai.devexa.ro/v1/form-protection/validate</api_endpoint>
                 <api_endpoint_dev>https://host.docker.internal:3443/v1/form-protection/validate</api_endpoint_dev>
                 <api_key/>
                 <mode>analyze</mode>

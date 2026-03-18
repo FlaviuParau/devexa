@@ -9,6 +9,7 @@
                    after="-">
                 <arguments>
                     <argument name="recommendation_context" xsi:type="string">cart</argument>
+                    <argument name="recommendation_type" xsi:type="string">crosssell</argument>
                     <argument name="display_mode" xsi:type="string">carousel</argument>
                 </arguments>
             </block>

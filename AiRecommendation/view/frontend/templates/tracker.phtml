@@ -49,21 +49,56 @@ $trackingConfig = $trackerVm->getTrackingConfig();
             }
         }
 
-        // Track product view
+        // Track product view — try multiple selectors for Luma/Hyva compatibility
         if (config.trackProductViews) {
-            var productIdMeta = document.querySelector('meta[property="product:id"], [data-product-id]');
-            if (productIdMeta) {
-                var pid = productIdMeta.getAttribute('content') || productIdMeta.getAttribute('data-product-id');
-                if (pid) {
-                    trackEvent('product_view', {product_id: pid});
+            var pid = null;
+
+            // 1. Standard meta tag
+            var metaEl = document.querySelector('meta[property="product:id"]');
+            if (metaEl) {
+                pid = metaEl.getAttribute('content');
+            }
+
+            // 2. Hyva price-box with data-product-id (inside .product-info-main)
+            if (!pid) {
+                var priceBox = document.querySelector('.product-info-main .price-box[data-product-id]');
+                if (priceBox) {
+                    pid = priceBox.getAttribute('data-product-id');
                 }
+            }
+
+            // 3. Any element with data-product-id on the page
+            if (!pid) {
+                var anyProductId = document.querySelector('[data-product-id]');
+                if (anyProductId) {
+                    pid = anyProductId.getAttribute('data-product-id');
+                }
+            }
+
+            // 4. Hidden input in add-to-cart form (universal)
+            if (!pid) {
+                var productInput = document.querySelector('form#product_addtocart_form input[name="product"]');
+                if (productInput) {
+                    pid = productInput.value;
+                }
+            }
+
+            // 5. Body class check — confirm we're on a product page
+            if (pid && document.body.classList.contains('catalog-product-view')) {
+                trackEvent('product_view', {product_id: pid});
+            } else if (pid && window.location.pathname.match(/\.html$/)) {
+                // Fallback: URL pattern match for product pages
+                trackEvent('product_view', {product_id: pid});
+            } else if (pid) {
+                trackEvent('product_view', {product_id: pid});
             }
         }
 
-        // Track add to cart
+        // Track add to cart — Luma click delegation + Hyva event listeners
         if (config.trackAddToCart) {
+            // Luma: click delegation on add-to-cart buttons
             document.addEventListener('click', function(e) {
-                var btn = e.target.closest('[data-post], .tocart, #product-addtocart-button');
+                var btn = e.target.closest('[data-post], .tocart, #product-addtocart-button, button[type="submit"].action.primary');
                 if (!btn) return;
 
                 var form = btn.closest('form');
@@ -71,6 +106,31 @@ $trackingConfig = $trackerVm->getTrackingConfig();
                     var productInput = form.querySelector('input[name="product"]');
                     if (productInput) {
                         trackEvent('add_to_cart', {product_id: productInput.value});
+                    }
+                }
+            });
+
+            // Hyva: listen for cart section reload event (dispatched after successful add-to-cart)
+            window.addEventListener('reload-customer-section-data', function() {
+                var form = document.querySelector('form#product_addtocart_form');
+                if (form) {
+                    var productInput = form.querySelector('input[name="product"]');
+                    if (productInput) {
+                        trackEvent('add_to_cart', {product_id: productInput.value});
+                    }
+                }
+            });
+
+            // Fallback: observe minicart counter changes via private-content-loaded
+            window.addEventListener('private-content-loaded', function(event) {
+                if (event.detail && event.detail.data && event.detail.data.cart) {
+                    // Cart section was updated — the latest item was likely just added
+                    var cartData = event.detail.data.cart;
+                    if (cartData.items && cartData.items.length > 0) {
+                        var latestItem = cartData.items[cartData.items.length - 1];
+                        if (latestItem && latestItem.product_id) {
+                            trackEvent('add_to_cart', {product_id: String(latestItem.product_id)});
+                        }
                     }
                 }
             });

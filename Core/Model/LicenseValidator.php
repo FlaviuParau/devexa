@@ -19,6 +19,12 @@ class LicenseValidator
     private const CACHE_KEY_PREFIX = 'devexa_license_';
     private const CONFIG_PREFIX = 'devexa_core/license/';
 
+    /**
+     * Grace period: how long services keep working after the platform becomes unreachable.
+     * After this, services are disabled until the platform responds again.
+     */
+    private const NETWORK_GRACE_HOURS = 24;
+
     private ?array $cachedResult = null;
 
     public function __construct(
@@ -35,7 +41,6 @@ class LicenseValidator
 
     /**
      * Check if a specific service is licensed and active.
-     * Results are cached for X hours to avoid hitting the API on every request.
      */
     public function isServiceActive(string $service): bool
     {
@@ -50,8 +55,6 @@ class LicenseValidator
 
     /**
      * Get a platform setting value.
-     * These come from the tenant settings on the platform (single source of truth).
-     * Example: getSetting('recommendations.algorithm') returns 'frequently_bought'
      */
     public function getSetting(string $path, $default = null)
     {
@@ -88,22 +91,57 @@ class LicenseValidator
             return $this->cachedResult;
         }
 
-        // Check persistent cache first
         $cacheKey = self::CACHE_KEY_PREFIX . md5($apiKey);
+
+        // Check persistent cache first
         $cached = $this->cache->load($cacheKey);
         if ($cached) {
             try {
-                $this->cachedResult = $this->json->unserialize($cached);
-                return $this->cachedResult;
+                $cachedData = $this->json->unserialize($cached);
+
+                // Check if cached license has expired
+                if ($this->isLicenseExpired($cachedData)) {
+                    // License expired — must re-validate, don't use stale cache
+                    $this->cache->remove($cacheKey);
+                } else {
+                    $this->cachedResult = $cachedData;
+                    return $this->cachedResult;
+                }
             } catch (\Exception $e) {
                 // Cache corrupted, re-validate
             }
         }
 
         // Call the platform to validate
-        $this->cachedResult = $this->callPlatform($apiKey);
+        $result = $this->callPlatform($apiKey);
 
-        // Cache the result
+        // On network error: use last known good result within grace period
+        if (isset($result['error']) && $result['error'] === 'network') {
+            $lastGood = $this->getLastKnownGood($apiKey);
+            if ($lastGood) {
+                // Use last known good, but mark it as degraded
+                $lastGood['degraded'] = true;
+                $lastGood['network_error'] = true;
+                $this->cachedResult = $lastGood;
+
+                // Re-cache with shorter TTL (1 hour) so we retry sooner
+                $this->cache->save(
+                    $this->json->serialize($this->cachedResult),
+                    $cacheKey,
+                    [CacheType::CACHE_TAG],
+                    3600
+                );
+                return $this->cachedResult;
+            }
+
+            // No last known good — license is invalid
+            $this->cachedResult = $result;
+            return $this->cachedResult;
+        }
+
+        $this->cachedResult = $result;
+
+        // Cache the result + store as last known good if valid
         $cacheHours = (int) ($this->scopeConfig->getValue(
             self::CONFIG_PREFIX . 'cache_hours',
             ScopeInterface::SCOPE_STORE
@@ -115,6 +153,16 @@ class LicenseValidator
             [CacheType::CACHE_TAG],
             $cacheHours * 3600
         );
+
+        // Store as "last known good" for grace period fallback
+        if ($result['valid'] ?? false) {
+            $this->cache->save(
+                $this->json->serialize($this->cachedResult),
+                $cacheKey . '_last_good',
+                [CacheType::CACHE_TAG],
+                self::NETWORK_GRACE_HOURS * 3600
+            );
+        }
 
         return $this->cachedResult;
     }
@@ -131,6 +179,65 @@ class LicenseValidator
         }
         $this->cachedResult = null;
         return $this->validate();
+    }
+
+    /**
+     * Check if a license result indicates the subscription has expired.
+     */
+    private function isLicenseExpired(array $data): bool
+    {
+        if (!($data['valid'] ?? false)) {
+            return true;
+        }
+
+        $expires = $data['expires'] ?? null;
+        if ($expires && strtotime($expires) < time()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the last known good license result within grace period.
+     * Returns null if no valid result exists or grace period has elapsed.
+     */
+    private function getLastKnownGood(string $apiKey): ?array
+    {
+        $cacheKey = self::CACHE_KEY_PREFIX . md5($apiKey) . '_last_good';
+        $cached = $this->cache->load($cacheKey);
+        if (!$cached) {
+            return null;
+        }
+
+        try {
+            $data = $this->json->unserialize($cached);
+
+            // Must be a valid license
+            if (!($data['valid'] ?? false)) {
+                return null;
+            }
+
+            // Must not be expired
+            if ($this->isLicenseExpired($data)) {
+                $this->cache->remove($cacheKey);
+                return null;
+            }
+
+            // Check grace period from last successful check
+            $checkedAt = $data['checked_at'] ?? null;
+            if ($checkedAt) {
+                $hoursSinceCheck = (time() - strtotime($checkedAt)) / 3600;
+                if ($hoursSinceCheck > self::NETWORK_GRACE_HOURS) {
+                    $this->cache->remove($cacheKey);
+                    return null;
+                }
+            }
+
+            return $data;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     private function callPlatform(string $apiKey): array
@@ -170,8 +277,8 @@ class LicenseValidator
             return ['valid' => false, 'error' => 'api_error', 'status' => $curl->getStatus()];
         } catch (\Exception $e) {
             $this->logger->error('Devexa license validation error: ' . $e->getMessage());
-            // On network error, be generous — allow cached/last-known state
-            return ['valid' => true, 'services' => [], 'error' => 'network', 'checked_at' => date('Y-m-d H:i:s')];
+            // Network error — don't grant access, let caller use grace period fallback
+            return ['valid' => false, 'services' => [], 'error' => 'network', 'checked_at' => date('Y-m-d H:i:s')];
         }
     }
 

@@ -19,6 +19,26 @@ class Recommendations extends Template
 {
     private const CONFIG_PATH_PREFIX = 'devexa_ai_recommendation/';
 
+    /**
+     * Supported recommendation types and their default titles
+     */
+    private const TYPE_TITLES = [
+        'frequently_bought' => 'Frequently Bought Together',
+        'upsell'            => 'You May Also Like',
+        'crosssell'         => 'Customers Also Bought',
+        'similar'           => 'Similar Products',
+    ];
+
+    /**
+     * Map recommendation type to admin config field for custom title
+     */
+    private const TYPE_TITLE_CONFIG = [
+        'frequently_bought' => 'widgets/fbt_title',
+        'upsell'            => 'widgets/upsell_title',
+        'crosssell'         => 'widgets/crosssell_title',
+        'similar'           => 'widgets/similar_title',
+    ];
+
     private ?array $loadedItems = null;
 
     public function __construct(
@@ -53,11 +73,12 @@ class Recommendations extends Template
         }
 
         $context = $this->getRecommendationContext();
+        $type = $this->getRecommendationType();
         $productId = $this->getCurrentProductId();
         $visitorId = null; // Server-side rendering — no visitor ID available
         $limit = $this->getMaxProducts();
 
-        $productIds = $this->engine->getRecommendations($context, $productId, $visitorId, $limit);
+        $productIds = $this->engine->getRecommendations($context, $productId, $visitorId, $limit, $type);
 
         if (empty($productIds)) {
             return $this->loadedItems;
@@ -89,26 +110,74 @@ class Recommendations extends Template
         return (string) ($this->getData('recommendation_context') ?: 'product');
     }
 
+    /**
+     * Get the recommendation type (frequently_bought, upsell, crosssell, similar).
+     * Falls back to 'upsell' if not set.
+     */
+    public function getRecommendationType(): string
+    {
+        $type = (string) ($this->getData('recommendation_type') ?: '');
+        if ($type && isset(self::TYPE_TITLES[$type])) {
+            return $type;
+        }
+
+        // Legacy fallback: map context to a default type
+        $contextDefaults = [
+            'product'  => 'upsell',
+            'cart'     => 'crosssell',
+            'homepage' => 'upsell',
+            'category' => 'upsell',
+        ];
+
+        return $contextDefaults[$this->getRecommendationContext()] ?? 'upsell';
+    }
+
     public function getCurrentProductId(): ?int
     {
         $product = $this->registry->registry('current_product');
         return $product ? (int) $product->getId() : null;
     }
 
+    /**
+     * Get the widget title. Checks type-specific config first, then falls back to
+     * context-based config (legacy), then to the hardcoded default for the type.
+     */
     public function getTitle(): string
     {
+        $type = $this->getRecommendationType();
+
+        // 1. Check type-specific config
+        if (isset(self::TYPE_TITLE_CONFIG[$type])) {
+            $title = (string) $this->scopeConfig->getValue(
+                self::CONFIG_PATH_PREFIX . self::TYPE_TITLE_CONFIG[$type],
+                ScopeInterface::SCOPE_STORE
+            );
+            if ($title) {
+                return $title;
+            }
+        }
+
+        // 2. Fallback to legacy context-based config
         $context = $this->getRecommendationContext();
-        $configMap = [
-            'product' => 'widgets/product_page_title',
-            'cart' => 'widgets/cart_page_title',
+        $contextConfigMap = [
+            'product'  => 'widgets/product_page_title',
+            'cart'     => 'widgets/cart_page_title',
             'homepage' => 'widgets/homepage_title',
             'category' => 'widgets/category_page_title',
         ];
 
-        return (string) $this->scopeConfig->getValue(
-            self::CONFIG_PATH_PREFIX . ($configMap[$context] ?? 'widgets/product_page_title'),
-            ScopeInterface::SCOPE_STORE
-        );
+        if (isset($contextConfigMap[$context])) {
+            $title = (string) $this->scopeConfig->getValue(
+                self::CONFIG_PATH_PREFIX . $contextConfigMap[$context],
+                ScopeInterface::SCOPE_STORE
+            );
+            if ($title) {
+                return $title;
+            }
+        }
+
+        // 3. Hardcoded default for the type
+        return self::TYPE_TITLES[$type] ?? 'Recommended for You';
     }
 
     public function isEnabled(): bool

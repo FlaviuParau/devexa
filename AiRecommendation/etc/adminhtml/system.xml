@@ -87,6 +87,22 @@
                         <field id="show_on_category_page">1</field>
                     </depends>
                 </field>
+                <field id="fbt_title" translate="label comment" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Frequently Bought Together Title</label>
+                    <comment>Title for the "Frequently Bought Together" widget on product pages.</comment>
+                </field>
+                <field id="similar_title" translate="label comment" type="text" sortOrder="55" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Similar Products Title</label>
+                    <comment>Title for the "Similar Products" widget on product pages.</comment>
+                </field>
+                <field id="upsell_title" translate="label comment" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>You May Also Like Title</label>
+                    <comment>Title for the "You May Also Like" (upsell) widget on homepage and category pages.</comment>
+                </field>
+                <field id="crosssell_title" translate="label comment" type="text" sortOrder="65" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Customers Also Bought Title</label>
+                    <comment>Title for the "Customers Also Bought" (crosssell) widget on cart page.</comment>
+                </field>
             </group>
         </section>
     </system>
